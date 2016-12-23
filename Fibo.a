@@ -1,0 +1,123 @@
+#Hillary Arurang
+#Fibonacci
+
+.data
+prompt: .asciiz "Enter requested nth value: "
+
+answer: .asciiz "The nth number is: "
+
+.text
+main:
+	# prompt for input
+	li	$v0, 4
+	la $a0, prompt
+	syscall
+
+	#read in integer
+	li	$v0, 5
+	syscall
+
+	#get absolute of number provided by user
+	jal getAbsolute
+
+	#v0 contains input value
+	#move input to $s0
+	move $s0, $v0
+
+	#move 1 to $t0
+	#this will be used for comparison
+	addi $t0, $zero, 1
+
+	#move 2 to $t1
+	#this will be used for comparison
+	addi $t1, $zero, 2
+
+	#call to fib procedure
+	jal fib
+
+	#print string
+	li $v0, 4
+	la $a0, answer
+	syscall
+
+	#print nth number
+	li $v0, 1
+	add $a0, $t3, $zero
+	syscall
+
+	#exit program
+	li $v0,10
+	syscall
+
+getAbsolute:
+	#is input less than 0
+	slt $t0, $v0, $zero
+
+	#if yes, jump to subtract
+	bne $t0, $zero, subtract
+
+	#else, return
+	jr $ra
+
+	subtract:
+		#zero minus input
+		sub $v0, $zero, $v0
+
+	#return
+	jr $ra
+
+fib:
+	#make room on stack
+	addi $sp, $sp, -8
+
+	#save $ra and $s0 on stack
+	sw $ra, 0($sp)
+	sw $s0, 4($sp)
+
+	#if $s0 is a 0, 1 or 2 jump to return
+	beq $s0, $t0, return
+	beq $s0, $t1, return
+	beq $s0, $zero, return2
+
+	#subtract 2 from $s0
+	addi $s0, $s0, -2
+
+	#recursive call
+	jal fib
+
+	#restore $s0 to intial value
+	lw $s0, 4($sp) #does not work
+
+	#subtract 1 from $s0
+	addi $s0, $s0, -1
+
+	#recursive call
+	jal fib
+
+	#once the program has returned to the intial call, jump to return2
+	j return2
+
+	return:
+		#restore initial $ra and $s0 values
+		lw $ra, 0($sp)
+		lw $s0, 4($sp)
+
+		#return to top of stack
+		addi $sp, $sp, 8
+
+		#increment $t3
+		addi $t3, 1
+
+		#return to callee
+		jr $ra
+
+	return2:
+		#restore initial $ra and $s0 values
+		lw $ra, 0($sp)
+		lw $s0, 4($sp)
+
+		#return to top of stack
+		addi $sp, $sp, 8
+
+		#return to callee
+		jr $ra
